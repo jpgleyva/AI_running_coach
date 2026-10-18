@@ -102,6 +102,18 @@ compartido de intentos, así que no reintentes credenciales dudosas.
 que el coach use se envían a Copilot para generar la respuesta. Solo conéctalo si
 aceptas ese tratamiento de datos.
 
+## Equipo multiagente
+
+El coordinador delega las consultas relevantes en especialistas de running,
+nutrición/recomposición corporal y recuperación/seguridad de rodilla, y sintetiza
+una respuesta única. Las consultas que cruzan varios temas pueden involucrar a
+más de un especialista. Las restricciones de seguridad siguen aplicándose a todo
+el equipo. Los especialistas solo reciben las herramientas MCP necesarias para
+su dominio (cálculos y entrenamientos, sueño y recuperación, o composición
+corporal); el coordinador no accede directamente a las herramientas MCP. Las
+consultas de Zepp siguen sujetas a las mismas herramientas permitidas y al aviso
+de privacidad anterior.
+
 En la conversación, escribe `/salir` para terminar. También puedes ejecutarlo sin
 instalar el comando:
 
