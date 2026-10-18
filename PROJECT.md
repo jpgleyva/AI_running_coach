@@ -20,6 +20,7 @@ Roadmap:
 2. Tool Calling: herramientas locales para calcular ritmo medio y estimar
    tiempos de carrera.
 3. MCP: servidor local para cálculos y conexión opcional a Zepp/Amazfit.
-4. Memoria
+4. Memoria: perfil temporal confirmado y editable durante la sesión; no persistir
+   los datos al cerrar.
 5. Multiagente
 6. A2A
