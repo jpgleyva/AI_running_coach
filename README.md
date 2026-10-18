@@ -38,6 +38,33 @@ running-coach
 
 El coach inicia automáticamente su servidor MCP local cuando crea la sesión.
 
+## Memoria temporal de sesión
+
+La memoria del perfil solo se mantiene en el proceso actual y requiere confirmación
+explícita. Comandos disponibles:
+
+```text
+/recordar objetivo=correr 10 km
+/recordar disponibilidad=martes y jueves
+/recordar preferencias=sesiones fáciles entre semana
+/recordar unidades=km
+/memoria
+/olvidar objetivo
+/olvidar-todo
+```
+
+Los campos permitidos son `objetivo`, `disponibilidad`, `preferencias` y
+`unidades`. No guardes credenciales ni historial médico detallado. El perfil
+confirmado se añade al contexto que se envía a Copilot en los turnos siguientes.
+Borrar una entrada la quita del perfil futuro, pero no retira los mensajes que ya
+se enviaron al modelo durante la sesión.
+
+El SDK de Copilot guarda localmente el historial de la sesión mientras está
+activa. Al cerrar normalmente, la aplicación elimina esa sesión local; si el
+proceso se termina abruptamente, el historial puede permanecer en el disco. Los
+mensajes también se envían a Copilot para generar respuestas. La memoria del
+perfil no se escribe en JSON ni se conserva entre sesiones.
+
 ## Conexión opcional a Zepp/Amazfit
 
 El agente puede lanzar como proceso separado el servidor
@@ -88,7 +115,8 @@ python -m running_coach.cli
 - Las herramientas locales calculan ritmo medio (distancia y duración) y tiempo
   estimado (distancia y ritmo constante), con parámetros validados.
 - La integración Zepp es opcional; no hay conexión a Garmin ni Google Calendar.
-- Sin memoria propia entre sesiones.
+- El perfil de coaching solo se conserva en memoria durante la sesión y se borra
+  al salir; no se escribe a un archivo JSON.
 - El coach no diagnostica lesiones ni sustituye atención médica; evita recomendar
   correr con dolor y señala cuándo buscar valoración profesional.
 
