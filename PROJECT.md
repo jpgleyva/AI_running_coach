@@ -24,4 +24,5 @@ Roadmap:
    los datos al cerrar.
 5. Multiagente: coordinador automático con especialistas en running,
    nutrición/recomposición corporal y recuperación/seguridad de rodilla.
-6. A2A
+6. A2A: exponer el coach mediante servidor local A2A para consultas
+   conversacionales, sin herramientas Zepp expuestas.

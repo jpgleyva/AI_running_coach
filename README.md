@@ -114,6 +114,26 @@ corporal); el coordinador no accede directamente a las herramientas MCP. Las
 consultas de Zepp siguen sujetas a las mismas herramientas permitidas y al aviso
 de privacidad anterior.
 
+## Servidor A2A local
+
+También puedes exponer el coach como agente A2A 1.0 sobre JSON-RPC para que otros
+agentes locales puedan descubrirlo y enviarle consultas de texto:
+
+```powershell
+running-coach-a2a
+```
+
+El servidor escucha exclusivamente en `127.0.0.1:8765`; puedes elegir otro
+puerto local con `running-coach-a2a --port 8766`. La ficha pública está en
+`http://127.0.0.1:8765/.well-known/agent-card.json`. Las tareas y sus mensajes
+solo se conservan en memoria mientras el proceso está activo.
+
+El endpoint A2A no expone herramientas MCP ni datos de Zepp. Cada tarea crea una
+sesión temporal de Copilot con especialistas sin conexiones MCP, y envía el
+texto de la consulta a Copilot para generar la respuesta. El endpoint no tiene
+autenticación: no cambies el bind de localhost ni lo publiques en una red.
+Admite únicamente texto de hasta 4.000 caracteres por consulta.
+
 En la conversación, escribe `/salir` para terminar. También puedes ejecutarlo sin
 instalar el comando:
 
