@@ -8,10 +8,14 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "github-copilot-sdk" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "github-copilot-sdk", specifier = ">=0.1.0,<1.0" }]
+requires-dist = [
+    { name = "github-copilot-sdk", specifier = ">=0.1.0,<1.0" },
+    { name = "pydantic", specifier = ">=2.11,<3" },
+]
 
 [[package]]
 name = "annotated-types"

@@ -17,7 +17,8 @@ Fuentes de datos:
 Roadmap:
 1. Agente simple: CLI conversacional de running y recomposición corporal,
    con el contexto del usuario y límites seguros para molestias de rodilla.
-2. Tool Calling
+2. Tool Calling: herramientas locales para calcular ritmo medio y estimar
+   tiempos de carrera.
 3. MCP
 4. Memoria
 5. Multiagente
