@@ -15,7 +15,8 @@ Fuentes de datos:
 - Google Calendar
 
 Roadmap:
-1. Agente simple
+1. Agente simple: CLI conversacional de running y recomposición corporal,
+   con el contexto del usuario y límites seguros para molestias de rodilla.
 2. Tool Calling
 3. MCP
 4. Memoria
