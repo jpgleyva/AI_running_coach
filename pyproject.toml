@@ -9,6 +9,7 @@ description = "Agente conversacional de running y recomposición corporal"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "a2a-sdk[http-server]>=1.0,<2",
     "github-copilot-sdk>=0.1.0,<1.0",
     "mcp>=1.30,<2",
     "pydantic>=2.11,<3",
@@ -16,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 running-coach = "running_coach.cli:main"
+running-coach-a2a = "running_coach.a2a_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
