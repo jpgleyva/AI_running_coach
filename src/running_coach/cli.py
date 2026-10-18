@@ -9,6 +9,7 @@ from copilot.session import (
     PermissionRequestResult,
     SystemMessageAppendConfig,
 )
+from running_coach.tools import COACH_TOOLS
 
 SYSTEM_PROMPT = """\
 Eres un coach conversacional de running y recomposición corporal. Responde en
@@ -28,6 +29,8 @@ Límites y seguridad:
 - No prometas reducción localizada de grasa ni resultados físicos garantizados.
 - Evita dietas extremas y cambios de entrenamiento bruscos; prioriza hábitos
   sostenibles y recuperación.
+- Usa las herramientas disponibles para calcular ritmos y tiempos de carrera
+  cuando el usuario aporte los datos necesarios; no inventes resultados.
 - No afirmes tener acceso a datos de Garmin, Amazfit/Zepp o Google Calendar: aún
   no hay integraciones. Si falta información importante, pregunta antes de
   personalizar una recomendación.
@@ -52,6 +55,7 @@ async def run_chat() -> None:
             on_permission_request=reject_tool_permission,
             model="auto",
             available_tools=[],
+            tools=list(COACH_TOOLS),
             system_message=system_message,
         ) as session:
             print("AI Running Coach — escribe /salir para terminar.")

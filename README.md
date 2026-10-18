@@ -1,8 +1,8 @@
 # AI Running Coach
 
-Primera fase del proyecto: un agente conversacional sencillo para running y
-recomposición corporal, conectado a GitHub Copilot mediante el SDK oficial de
-Python.
+Agente conversacional para running y recomposición corporal, conectado a GitHub
+Copilot mediante el SDK oficial de Python. La Fase 2 añade herramientas locales
+para calcular ritmo medio y estimar tiempos de carrera.
 
 ## Requisitos
 
@@ -46,8 +46,11 @@ python -m running_coach.cli
 ## Alcance de esta fase
 
 - Conversación en español con el perfil descrito en [PROJECT.md](PROJECT.md).
-- Sin herramientas ni integraciones con dispositivos o calendarios; el proyecto no
-  incorpora memoria propia entre sesiones.
+- Las herramientas calculan ritmo medio (distancia y duración) y tiempo estimado
+  (distancia y ritmo constante). Validan sus parámetros y no acceden a internet,
+  archivos, dispositivos ni calendarios.
+- Sin memoria propia entre sesiones ni integraciones con Garmin, Amazfit/Zepp o
+  Google Calendar.
 - El coach no diagnostica lesiones ni sustituye atención médica; evita recomendar
   correr con dolor y señala cuándo buscar valoración profesional.
 
