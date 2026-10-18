@@ -1,15 +1,22 @@
 import asyncio
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from copilot.generated.session_events import PermissionRequestKind
 from copilot.session import PermissionRequest
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
-from running_coach.cli import MCP_SERVERS, reject_tool_permission
+from running_coach.mcp_config import (
+    MCP_SERVERS,
+    ZEPP_TOOL_NAMES,
+    build_mcp_servers,
+    reject_unapproved_tool_permission,
+)
 from running_coach.mcp_server import MCP_TOOL_NAMES
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -69,6 +76,11 @@ class MCPToolsTests(unittest.TestCase):
             server_name="running-coach",
             tool_name="calculate_running_pace",
         )
+        allowed_zepp = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="zepp",
+            tool_name="zepp_body_composition",
+        )
         unknown_tool = PermissionRequest(
             kind=PermissionRequestKind.MCP,
             server_name="running-coach",
@@ -79,12 +91,75 @@ class MCPToolsTests(unittest.TestCase):
             server_name="other-server",
             tool_name="calculate_running_pace",
         )
+        raw_zepp_request = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="zepp",
+            tool_name="zepp_raw_request",
+        )
+        gps_workout_detail = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="zepp",
+            tool_name="zepp_workout_detail",
+        )
         shell_request = PermissionRequest(kind=PermissionRequestKind.SHELL)
 
-        self.assertEqual(reject_tool_permission(allowed, {}).kind, "approve-once")
-        self.assertEqual(reject_tool_permission(unknown_tool, {}).kind, "reject")
-        self.assertEqual(reject_tool_permission(other_server, {}).kind, "reject")
-        self.assertEqual(reject_tool_permission(shell_request, {}).kind, "reject")
+        self.assertEqual(reject_unapproved_tool_permission(allowed, {}).kind, "approve-once")
+        self.assertEqual(
+            reject_unapproved_tool_permission(allowed_zepp, {}).kind,
+            "approve-once",
+        )
+        self.assertEqual(
+            reject_unapproved_tool_permission(unknown_tool, {}).kind,
+            "reject",
+        )
+        self.assertEqual(
+            reject_unapproved_tool_permission(other_server, {}).kind,
+            "reject",
+        )
+        self.assertEqual(
+            reject_unapproved_tool_permission(raw_zepp_request, {}).kind,
+            "reject",
+        )
+        self.assertEqual(
+            reject_unapproved_tool_permission(gps_workout_detail, {}).kind,
+            "reject",
+        )
+        self.assertEqual(
+            reject_unapproved_tool_permission(shell_request, {}).kind,
+            "reject",
+        )
+
+    def test_zepp_checkout_uses_its_own_locked_uv_environment_and_tool_allowlist(self) -> None:
+        with tempfile.TemporaryDirectory() as checkout:
+            Path(checkout, "pyproject.toml").touch()
+            expected_root = Path(checkout).resolve()
+            with patch.dict(
+                os.environ,
+                {"PATH": "safe-path", "GH_TOKEN": "must-not-be-forwarded"},
+                clear=True,
+            ):
+                servers = build_mcp_servers(checkout, uv_executable="uv")
+
+        zepp_config = servers["zepp"]
+        self.assertEqual(zepp_config["command"], "uv")
+        self.assertEqual(
+            zepp_config["args"],
+            [
+                "run",
+                "--locked",
+                "--directory",
+                str(expected_root),
+                "zepp-mcp",
+            ],
+        )
+        self.assertEqual(set(zepp_config["tools"]), set(ZEPP_TOOL_NAMES))
+        self.assertEqual(zepp_config["env"], {"PATH": "safe-path"})
+        self.assertNotIn("zepp_raw_request", ZEPP_TOOL_NAMES)
+        self.assertNotIn("zepp_workout_detail", ZEPP_TOOL_NAMES)
+
+    def test_invalid_zepp_checkout_path_is_reported(self) -> None:
+        with self.assertRaisesRegex(ValueError, "ZEPP_MCP_PATH"):
+            build_mcp_servers("missing-zepp-checkout", uv_executable="uv")
 
 
 if __name__ == "__main__":
