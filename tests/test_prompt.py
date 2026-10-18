@@ -10,6 +10,8 @@ class SystemPromptTests(unittest.TestCase):
         self.assertIn("rodilla derecha", SYSTEM_PROMPT)
         self.assertIn("No diagnostiques lesiones", SYSTEM_PROMPT)
         self.assertIn("No prometas reducción localizada de grasa", SYSTEM_PROMPT)
+        self.assertIn("delega en el especialista", SYSTEM_PROMPT)
+        self.assertIn("priorizando la seguridad", SYSTEM_PROMPT)
 
     def test_zepp_server_is_optional(self) -> None:
         self.assertNotIn("zepp", build_mcp_servers())
