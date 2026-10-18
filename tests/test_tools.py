@@ -1,65 +1,90 @@
 import asyncio
+import os
+import sys
 import unittest
+from pathlib import Path
 
-from copilot.tools import ToolInvocation
+from copilot.generated.session_events import PermissionRequestKind
+from copilot.session import PermissionRequest
+from mcp import ClientSession
+from mcp.client.stdio import StdioServerParameters, stdio_client
 
-from running_coach.tools import COACH_TOOLS
+from running_coach.cli import MCP_SERVERS, reject_tool_permission
+from running_coach.mcp_server import MCP_TOOL_NAMES
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-class CoachToolTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.tools = {tool.name: tool for tool in COACH_TOOLS}
-
-    def test_tools_are_registered_as_local_calculations(self) -> None:
-        self.assertEqual(
-            set(self.tools),
-            {"calculate_running_pace", "estimate_finish_time"},
-        )
-        self.assertTrue(all(tool.skip_permission for tool in self.tools.values()))
-        self.assertTrue(all(tool.parameters for tool in self.tools.values()))
-
-    def test_calculate_running_pace(self) -> None:
-        result = asyncio.run(
-            self.tools["calculate_running_pace"].handler(
-                ToolInvocation(
-                    arguments={"distance_km": 5, "duration_minutes": 25},
-                )
+async def call_server_tools() -> tuple[list[str], str, str, bool]:
+    server = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "running_coach.mcp_server"],
+        env=os.environ.copy(),
+        cwd=PROJECT_ROOT,
+    )
+    async with stdio_client(server) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            listed_tools = await session.list_tools()
+            pace = await session.call_tool(
+                "calculate_running_pace",
+                {"distance_km": 5, "duration_minutes": 25},
             )
-        )
-
-        self.assertEqual(
-            result.text_result_for_llm,
-            "Ritmo medio: 5:00 min/km. Velocidad media: 12.00 km/h.",
-        )
-        self.assertEqual(result.result_type, "success")
-
-    def test_estimate_finish_time(self) -> None:
-        result = asyncio.run(
-            self.tools["estimate_finish_time"].handler(
-                ToolInvocation(
-                    arguments={"distance_km": 10, "pace_seconds_per_km": 330},
-                )
+            finish = await session.call_tool(
+                "estimate_finish_time",
+                {"distance_km": 10, "pace_seconds_per_km": 330},
             )
-        )
-
-        self.assertEqual(
-            result.text_result_for_llm,
-            "Tiempo estimado a 5:30 min/km para 10 km: 00:55:00 "
-            "(hh:mm:ss), suponiendo un ritmo constante.",
-        )
-        self.assertEqual(result.result_type, "success")
-
-    def test_invalid_tool_arguments_are_rejected(self) -> None:
-        result = asyncio.run(
-            self.tools["calculate_running_pace"].handler(
-                ToolInvocation(
-                    arguments={"distance_km": 0, "duration_minutes": 25},
-                )
+            invalid = await session.call_tool(
+                "calculate_running_pace",
+                {"distance_km": 0, "duration_minutes": 25},
             )
-        )
+            return (
+                [tool.name for tool in listed_tools.tools],
+                pace.content[0].text,
+                finish.content[0].text,
+                invalid.isError,
+            )
 
-        self.assertEqual(result.result_type, "failure")
-        self.assertIsNotNone(result.error)
+
+class MCPToolsTests(unittest.TestCase):
+    def test_tools_work_over_stdio_and_reject_invalid_arguments(self) -> None:
+        tools, pace, finish, invalid_is_error = asyncio.run(call_server_tools())
+
+        self.assertEqual(set(tools), set(MCP_TOOL_NAMES))
+        self.assertIn("Ritmo medio: 5:00 min/km", pace)
+        self.assertIn("Velocidad media: 12.00 km/h", pace)
+        self.assertIn("00:55:00", finish)
+        self.assertTrue(invalid_is_error)
+
+    def test_copilot_only_connects_to_the_local_calculation_server(self) -> None:
+        config = MCP_SERVERS["running-coach"]
+
+        self.assertEqual(config["command"], sys.executable)
+        self.assertEqual(config["args"], ["-m", "running_coach.mcp_server"])
+        self.assertEqual(set(config["tools"]), set(MCP_TOOL_NAMES))
+
+    def test_mcp_permissions_are_limited_to_our_calculation_tools(self) -> None:
+        allowed = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="running-coach",
+            tool_name="calculate_running_pace",
+        )
+        unknown_tool = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="running-coach",
+            tool_name="other_tool",
+        )
+        other_server = PermissionRequest(
+            kind=PermissionRequestKind.MCP,
+            server_name="other-server",
+            tool_name="calculate_running_pace",
+        )
+        shell_request = PermissionRequest(kind=PermissionRequestKind.SHELL)
+
+        self.assertEqual(reject_tool_permission(allowed, {}).kind, "approve-once")
+        self.assertEqual(reject_tool_permission(unknown_tool, {}).kind, "reject")
+        self.assertEqual(reject_tool_permission(other_server, {}).kind, "reject")
+        self.assertEqual(reject_tool_permission(shell_request, {}).kind, "reject")
 
 
 if __name__ == "__main__":

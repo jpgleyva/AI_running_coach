@@ -19,7 +19,7 @@ Roadmap:
    con el contexto del usuario y límites seguros para molestias de rodilla.
 2. Tool Calling: herramientas locales para calcular ritmo medio y estimar
    tiempos de carrera.
-3. MCP
+3. MCP: servidor local para exponer los cálculos de ritmo y tiempo al agente.
 4. Memoria
 5. Multiagente
 6. A2A

@@ -1,15 +1,17 @@
 """CLI conversacional del agente de running."""
 
 import asyncio
+import sys
 
 from copilot import CopilotClient
-from copilot.generated.session_events import AssistantMessageData
+from copilot.generated.session_events import AssistantMessageData, PermissionRequestKind
 from copilot.session import (
+    MCPServerConfig,
     PermissionRequest,
     PermissionRequestResult,
     SystemMessageAppendConfig,
 )
-from running_coach.tools import COACH_TOOLS
+from running_coach.mcp_server import MCP_TOOL_NAMES
 
 SYSTEM_PROMPT = """\
 Eres un coach conversacional de running y recomposición corporal. Responde en
@@ -31,17 +33,35 @@ Límites y seguridad:
   sostenibles y recuperación.
 - Usa las herramientas disponibles para calcular ritmos y tiempos de carrera
   cuando el usuario aporte los datos necesarios; no inventes resultados.
+- Las herramientas son cálculos locales y no acceden a datos personales, archivos
+  ni servicios externos.
 - No afirmes tener acceso a datos de Garmin, Amazfit/Zepp o Google Calendar: aún
   no hay integraciones. Si falta información importante, pregunta antes de
   personalizar una recomendación.
 """
 
+MCP_SERVERS: dict[str, MCPServerConfig] = {
+    "running-coach": {
+        "type": "stdio",
+        "command": sys.executable,
+        "args": ["-m", "running_coach.mcp_server"],
+        "tools": list(MCP_TOOL_NAMES),
+        "timeout": 30000,
+    }
+}
+
 
 def reject_tool_permission(
-    _request: PermissionRequest,
+    request: PermissionRequest,
     _invocation: dict[str, str],
 ) -> PermissionRequestResult:
-    """Rechaza cualquier solicitud de permiso para ejecutar herramientas."""
+    """Permite solo las herramientas MCP locales de cálculo."""
+    if (
+        request.kind is PermissionRequestKind.MCP
+        and request.server_name == "running-coach"
+        and request.tool_name in MCP_TOOL_NAMES
+    ):
+        return PermissionRequestResult(kind="approve-once")
     return PermissionRequestResult(kind="reject")
 
 
@@ -55,7 +75,8 @@ async def run_chat() -> None:
             on_permission_request=reject_tool_permission,
             model="auto",
             available_tools=[],
-            tools=list(COACH_TOOLS),
+            mcp_servers=MCP_SERVERS,
+            enable_config_discovery=False,
             system_message=system_message,
         ) as session:
             print("AI Running Coach — escribe /salir para terminar.")

@@ -1,8 +1,8 @@
 # AI Running Coach
 
 Agente conversacional para running y recomposición corporal, conectado a GitHub
-Copilot mediante el SDK oficial de Python. La Fase 2 añade herramientas locales
-para calcular ritmo medio y estimar tiempos de carrera.
+Copilot mediante el SDK oficial de Python. La Fase 3 añade un servidor MCP local
+que expone los cálculos de ritmo y tiempo de carrera al agente.
 
 ## Requisitos
 
@@ -36,6 +36,8 @@ Tras completar el inicio de sesión y salir de Copilot CLI:
 running-coach
 ```
 
+El coach inicia automáticamente su servidor MCP local cuando crea la sesión.
+
 En la conversación, escribe `/salir` para terminar. También puedes ejecutarlo sin
 instalar el comando:
 
@@ -47,14 +49,15 @@ python -m running_coach.cli
 
 - Conversación en español con el perfil descrito en [PROJECT.md](PROJECT.md).
 - Las herramientas calculan ritmo medio (distancia y duración) y tiempo estimado
-  (distancia y ritmo constante). Validan sus parámetros y no acceden a internet,
-  archivos, dispositivos ni calendarios.
+  (distancia y ritmo constante). Un servidor MCP local por `stdio` expone estos
+  cálculos al agente; valida sus parámetros y no accede a internet, archivos,
+  dispositivos ni calendarios.
 - Sin memoria propia entre sesiones ni integraciones con Garmin, Amazfit/Zepp o
   Google Calendar.
 - El coach no diagnostica lesiones ni sustituye atención médica; evita recomendar
   correr con dolor y señala cuándo buscar valoración profesional.
 
-La Fase 1 no importa datos de Garmin, Amazfit/Zepp ni Google Calendar; no compartas
+El coach no importa datos de Garmin, Amazfit/Zepp ni Google Calendar; no compartas
 información sensible en el chat.
 
 ## Pruebas
